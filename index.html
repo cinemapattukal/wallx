@@ -411,10 +411,10 @@ footer {
   <section class="section" id="wallpapers">
     <div class="section-head">
       <h2>Explore Wallpapers</h2>
-      <span id="resultCount">20 wallpapers</span>
+      <span id="resultCount">0 wallpapers</span>
     </div>
     <div id="grid" class="grid"></div>
-    <div id="empty" class="empty">No wallpapers found. Try another search.</div>
+    <div id="empty" class="empty" style="display:none">No wallpapers found. Try another search.</div>
     <div class="more-area" id="moreArea">
       <button id="moreBtn" class="more-btn" type="button">See More Wallpapers ↓</button>
     </div>
@@ -479,7 +479,7 @@ const resultCount = document.getElementById("resultCount");
 const empty = document.getElementById("empty");
 
 
-let visibleCount = WALLPAPERS.length || INITIAL_COUNT;
+let visibleCount = WALLPAPERS.length;
 let filtered = WALLPAPERS.slice(0, visibleCount);
 
 
@@ -550,7 +550,7 @@ function render() {
   });
   resultCount.textContent = search.value.trim() ? `${filtered.length} results` : `${filtered.length} wallpapers`;
   empty.style.display = filtered.length ? "none" : "block";
-  moreArea.style.display = search.value.trim() ? "none" : "block";
+  moreArea.style.display = (search.value.trim() || WALLPAPERS.length === 0) ? "none" : "block";
   moreBtn.disabled = visibleCount >= WALLPAPERS.length;
   moreBtn.textContent = visibleCount >= WALLPAPERS.length ? "All Wallpapers Loaded ✓" : "See More Wallpapers ↓";
 }
@@ -613,9 +613,8 @@ async function loadPublishedWallpapers() {
 
 // Render cached content immediately, then silently sync fresh data from Firestore.
 if (WALLPAPERS.length) render();
+loadPublishedWallpapers();
 
 </script>
 </body>
 </html>
-
-loadPublishedWallpapers();
