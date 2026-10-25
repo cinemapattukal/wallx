@@ -327,11 +327,9 @@ footer {
 }
 #prev { left: 8px; }
 #next { right: 8px; }
-.viewer-download {
-  max-width: 360px;
-  padding: 14px 30px;
-  font-size: 14px;
-}
+.viewer-actions { display:flex; justify-content:center; gap:12px; padding:10px 0 4px; }
+.viewer-details { width:100%; max-width:520px; align-self:center; border:1px solid var(--border); border-radius:12px; }
+.viewer-hint { margin-top:8px; }
 .viewer-hint {
   color: var(--muted);
   font-size: 11px;
@@ -424,8 +422,15 @@ footer {
       <button id="next" class="slide-arrow" type="button"
               aria-label="Next wallpaper">›</button>
     </div>
-    <button id="viewerDownload" class="download-btn viewer-download"
-            type="button">↓ Download Wallpaper</button>
+    <div class="viewer-actions">
+      <button id="viewerDownload" class="icon-action" type="button" aria-label="Download wallpaper" title="Download">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></svg>
+      </button>
+      <button id="viewerShare" class="icon-action" type="button" aria-label="Share wallpaper" title="Share">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2"/></svg>
+      </button>
+    </div>
+    <div id="viewerDetails" class="wall-details viewer-details"></div>
     <div class="viewer-hint">Swipe left/right or use your keyboard arrows</div>
   </div>
 </div>
@@ -548,6 +553,30 @@ function getVisibleWallpapers() {
   );
 }
 
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "Unknown";
+  return bytes < 1024*1024 ? (bytes/1024).toFixed(0)+" KB" : (bytes/(1024*1024)).toFixed(2)+" MB";
+}
+function fileType(wallpaper) {
+  const explicit = wallpaper.fileType || wallpaper.filetype;
+  if (explicit) return String(explicit).replace(/^image\//i, "").toUpperCase();
+  try { const path = new URL(wallpaper.image).pathname; const ext = path.split(".").pop(); return ext && ext.length < 6 ? ext.toUpperCase() : "Image"; } catch { return "Image"; }
+}
+function detailsHTML(w) {
+  const resolution = w.resolution || (w._width && w._height ? `${w._width}x${w._height}` : "Loading image…");
+  const size = w.fileSize || w.file_size || w.size || "Unknown (URL only)";
+  const tags = Array.isArray(w.tags) ? w.tags.join(", ") : (w.tags || "—");
+  return `<h3>Image details</h3><div class="detail-row"><span>Tags</span><span>${escapeHTML(tags || "—")}</span></div><div class="detail-row"><span>Resolution</span><span>${escapeHTML(resolution)}</span></div><div class="detail-row"><span>File Size</span><span>${escapeHTML(typeof size === "number" ? formatBytes(size) : String(size))}</span></div><div class="detail-row"><span>File Type</span><span>${escapeHTML(fileType(w))}</span></div>`;
+}
+async function shareWallpaper(wallpaper) {
+  const shareData = {title: wallpaper.title || "WALLX Wallpaper", text: wallpaper.title || "Wallpaper", url: wallpaper.image};
+  try {
+    if (navigator.share) await navigator.share(shareData);
+    else if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(wallpaper.image); alert("Image link copied."); }
+    else { window.prompt("Copy wallpaper link:", wallpaper.image); }
+  } catch (e) { if (e.name !== "AbortError") { try { window.prompt("Copy wallpaper link:", wallpaper.image); } catch {} } }
+}
+
 function render() {
   filtered = getVisibleWallpapers();
   grid.innerHTML = "";
@@ -556,24 +585,21 @@ function render() {
     const card = document.createElement("article");
     card.className = "wall-card";
     card.innerHTML = `
-      <button class="thumb" type="button"
-        aria-label="View ${escapeHTML(wallpaper.title)}">
-        <img loading="lazy" decoding="async"
-          src="${escapeHTML(wallpaper.image)}"
-          alt="${escapeHTML(wallpaper.title)}">
-        <span class="view-label">View Wallpaper ↗</span>
+      <button class="card-open" type="button" aria-label="Open ${escapeHTML(wallpaper.title)}">
+        <span class="thumb"><img loading="lazy" decoding="async" src="${escapeHTML(wallpaper.image)}" alt="${escapeHTML(wallpaper.title)}"></span>
+        <div class="card-info"><div class="card-title">${escapeHTML(wallpaper.title)}</div></div>
       </button>
-      <div class="card-info">
-        <div class="card-title">${escapeHTML(wallpaper.title)}</div>
-        <div class="card-category">${escapeHTML(wallpaper.category)}</div>
-        <button class="download-btn" type="button">↓ Download</button>
-      </div>`;
-
-    card.querySelector(".thumb").addEventListener("click", () => {
-      openViewer(index);
-    });
-    card.querySelector(".download-btn").addEventListener("click", () => {
-      downloadWallpaper(wallpaper);
+      <div class="card-actions">
+        <button class="icon-action card-download" type="button" aria-label="Download ${escapeHTML(wallpaper.title)}" title="Download"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></svg></button>
+        <button class="icon-action card-share" type="button" aria-label="Share ${escapeHTML(wallpaper.title)}" title="Share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2"/></svg></button>
+      </div>
+      <div class="wall-details">${detailsHTML(wallpaper)}</div>`;
+    card.querySelector(".card-open").addEventListener("click", () => openViewer(index));
+    card.querySelector(".card-download").addEventListener("click", () => downloadWallpaper(wallpaper));
+    card.querySelector(".card-share").addEventListener("click", () => shareWallpaper(wallpaper));
+    card.querySelector("img").addEventListener("load", event => {
+      wallpaper._width = event.target.naturalWidth; wallpaper._height = event.target.naturalHeight;
+      const details = card.querySelector(".wall-details"); if(details) details.innerHTML = detailsHTML(wallpaper);
     });
     grid.appendChild(card);
   });
@@ -614,6 +640,7 @@ function updateViewer() {
   viewerImage.alt = wallpaper.title;
   viewerTitle.textContent = wallpaper.title;
   viewerCount.textContent = `${currentIndex + 1} / ${filtered.length}`;
+  document.getElementById("viewerDetails").innerHTML = detailsHTML(wallpaper);
   viewerDownload.disabled = false;
 }
 
@@ -685,6 +712,9 @@ viewer.addEventListener("click", event => {
 viewerDownload.addEventListener("click", () => {
   if (filtered[currentIndex]) downloadWallpaper(filtered[currentIndex]);
 });
+document.getElementById("viewerShare").addEventListener("click", () => {
+  if (filtered[currentIndex]) shareWallpaper(filtered[currentIndex]);
+});
 
 document.addEventListener("keydown", event => {
   if (!viewer.classList.contains("open")) return;
@@ -711,7 +741,7 @@ async function loadPublishedWallpapers() {
     if (snapshot.empty) return; // Keep demo content until you add published items.
     const fromFirebase = snapshot.docs.map(doc => {
       const d = doc.data();
-      return { id: doc.id, title: d.title || "Wallpaper", category: d.category || "Other", image: d.image || "" };
+      return { id: doc.id, title: d.title || "Wallpaper", category: d.category || "Other", image: d.image || "", tags: d.tags || d.description || "", resolution: d.resolution || "", fileSize: d.fileSize || d.file_size || "", fileType: d.fileType || d.filetype || "" };
     }).filter(w => /^https?:\/\//i.test(w.image));
     if (fromFirebase.length) {
       WALLPAPERS.splice(0, WALLPAPERS.length, ...fromFirebase);
