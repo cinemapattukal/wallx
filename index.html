@@ -439,7 +439,16 @@ footer {
   The demo images below are hosted by Unsplash.
 */
 
-const WALLPAPERS = []; // Live published wallpapers are loaded from Firestore; no demo flash. 
+const WALLPAPERS = []; // Live published wallpapers are loaded from Firestore; no demo flash.
+const WALLPAPER_CACHE_KEY = "wallx_published_wallpapers_v1";
+// Show the last successful result instantly while Firestore refreshes in the background.
+try {
+  const cached = localStorage.getItem(WALLPAPER_CACHE_KEY);
+  if (cached) {
+    const parsed = JSON.parse(cached);
+    if (Array.isArray(parsed)) WALLPAPERS.push(...parsed.filter(w => w && /^https?:\/\//i.test(w.image || "")));
+  }
+} catch (e) { console.warn("WALLX cache unavailable", e); }
 
 // Firebase Web App config: replace each value with your own Firebase Console config.
 const firebaseConfig = {
@@ -470,8 +479,8 @@ const resultCount = document.getElementById("resultCount");
 const empty = document.getElementById("empty");
 
 
-let visibleCount = INITIAL_COUNT;
-let filtered = WALLPAPERS.slice(0, INITIAL_COUNT);
+let visibleCount = WALLPAPERS.length || INITIAL_COUNT;
+let filtered = WALLPAPERS.slice(0, visibleCount);
 
 
 function escapeHTML(value) {
@@ -564,13 +573,20 @@ moreBtn.addEventListener("click", () => {
 });
 
 async function loadPublishedWallpapers() {
-  grid.innerHTML = "";
-  empty.style.display = "block";
-  empty.textContent = "Loading wallpapers…";
-  moreArea.style.display = "none";
+  // If cached wallpapers exist, keep them visible; never flash a loading message over them.
+  if (WALLPAPERS.length) {
+    visibleCount = WALLPAPERS.length;
+    render();
+  } else {
+    empty.style.display = "none";
+    moreArea.style.display = "none";
+  }
   if (!db) {
-    empty.textContent = "Firebase configuration is missing. Add your Firebase Web App config to index.html.";
-    resultCount.textContent = "0 wallpapers";
+    if (!WALLPAPERS.length) {
+      empty.style.display = "block";
+      empty.textContent = "Wallpapers are not available right now.";
+      resultCount.textContent = "0 wallpapers";
+    }
     return;
   }
   try {
@@ -580,18 +596,26 @@ async function loadPublishedWallpapers() {
       return { id: doc.id, title: d.title || "Wallpaper", category: d.category || "Other", image: d.image || "", tags: d.tags || d.description || "", resolution: d.resolution || "", fileSize: d.fileSize || d.file_size || "", fileType: d.fileType || d.filetype || "" };
     }).filter(w => /^https?:\/\//i.test(w.image));
     WALLPAPERS.splice(0, WALLPAPERS.length, ...fromFirebase);
+    try { localStorage.setItem(WALLPAPER_CACHE_KEY, JSON.stringify(fromFirebase)); } catch (e) { console.warn("Could not save WALLX cache", e); }
     visibleCount = WALLPAPERS.length;
     render();
     if (!WALLPAPERS.length) empty.textContent = "No published wallpapers yet.";
   } catch (error) {
     console.error("Could not load published wallpapers:", error);
-    resultCount.textContent = "— wallpapers";
-    empty.textContent = "Wallpapers could not be loaded. Check Firebase configuration and Firestore Rules.";
+    // Cached wallpapers remain on screen if the network or Firestore is slow/unavailable.
+    if (!WALLPAPERS.length) {
+      empty.style.display = "block";
+      empty.textContent = "Wallpapers could not be loaded. Please check your connection.";
+      resultCount.textContent = "0 wallpapers";
+    }
   }
 }
 
-// Wait for Firestore before rendering anything: demo wallpapers never flash on screen.
-loadPublishedWallpapers();
+// Render cached content immediately, then silently sync fresh data from Firestore.
+if (WALLPAPERS.length) render();
+
 </script>
 </body>
 </html>
+
+loadPublishedWallpapers();
