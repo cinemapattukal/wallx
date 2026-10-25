@@ -209,6 +209,15 @@ h1 {
   font-size: 11px;
   margin-bottom: 12px;
 }
+.card-info { padding: 12px 12px 16px; text-align: center; }
+.card-title { font-size: 15px; font-weight: 750; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; margin: 0; }
+.card-actions { display:flex; align-items:center; justify-content:center; gap:10px; padding: 0 12px 14px; }
+.card-download { flex:1; min-height:46px; border:1px solid #6555a2; border-radius:10px; padding:12px 10px; background:linear-gradient(110deg,#6857e8,#7850b8); color:#fff; font-weight:750; font-size:14px; }
+.card-share { flex:0 0 auto; min-height:42px; border:1px solid #6555a2; border-radius:10px; padding:10px 13px; background:#292341; color:#fff; font-size:13px; font-weight:650; }
+.card-download:disabled,.card-share:disabled { opacity:.65; }
+/* Homepage thumbnails are not clickable and never open the viewer. */
+.card-open { cursor:default; }
+.card-open:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 .download-btn, .more-btn {
   border: 0;
   border-radius: 9px;
@@ -414,33 +423,6 @@ footer {
 
 <footer>WALLX · Premium Wallpaper Collection</footer>
 
-<!-- Fullscreen wallpaper viewer -->
-<div id="viewer" class="viewer" role="dialog"
-     aria-modal="true" aria-label="Wallpaper viewer">
-  <div class="viewer-inner">
-    <div class="viewer-top">
-      <div>
-        <div id="viewerTitle" class="viewer-title">Wallpaper</div>
-        <div id="viewerCount" class="viewer-count">1 / 20</div>
-      </div>
-      <button id="closeViewer" class="icon-btn" type="button"
-              aria-label="Close viewer">×</button>
-    </div>
-    <div class="viewer-image-wrap" id="swipeArea">
-      <img id="viewerImage" src="" alt="Wallpaper preview">
-      <button id="prev" class="slide-arrow" type="button"
-              aria-label="Previous wallpaper">‹</button>
-      <button id="next" class="slide-arrow" type="button"
-              aria-label="Next wallpaper">›</button>
-    </div>
-    <div class="viewer-actions">
-      <button id="viewerDownload" type="button">Download</button>
-      <button id="viewerShare" type="button">Share</button>
-    </div>
-    <div class="viewer-hint">Swipe left/right or use your keyboard arrows</div>
-  </div>
-</div>
-
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
@@ -457,50 +439,7 @@ footer {
   The demo images below are hosted by Unsplash.
 */
 
-const WALLPAPERS = [
-  {title:"Mountain Dreams",category:"Nature",image:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Blue Ocean",category:"Nature",image:"https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Neon Nights",category:"Abstract",image:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Into the Forest",category:"Nature",image:"https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Desert Gold",category:"Nature",image:"https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=1000&q=85"},
-  {title:"City Lights",category:"City",image:"https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Misty Lake",category:"Nature",image:"https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Pink Sky",category:"Sky",image:"https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Golden Road",category:"Travel",image:"https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Snow Peaks",category:"Nature",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Palm Paradise",category:"Tropical",image:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Night Highway",category:"Cars",image:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Autumn Colours",category:"Nature",image:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Deep Space",category:"Space",image:"https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Green Hills",category:"Nature",image:"https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Calm Water",category:"Minimal",image:"https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Cloud Kingdom",category:"Sky",image:"https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Purple Horizon",category:"Abstract",image:"https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Wild Journey",category:"Wildlife",image:"https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Ocean Sunset",category:"Sunset",image:"https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1000&q=85"},
-
-  /* Additional wallpapers appended by See More */
-  {title:"Alpine Escape",category:"Travel",image:"https://images.unsplash.com/photo-1464278533981-50106e6176b1?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Blue Mountains",category:"Nature",image:"https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Waterfall Mood",category:"Nature",image:"https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Winter Morning",category:"Winter",image:"https://images.unsplash.com/photo-1418985991508-e47386d96a71?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Coastal Drive",category:"Travel",image:"https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Soft Clouds",category:"Sky",image:"https://images.unsplash.com/photo-1499346030926-9a72daac6c63?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Tropical Green",category:"Nature",image:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Open Road",category:"Travel",image:"https://images.unsplash.com/photo-1464219789935-c2d9d9aba644?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Ocean Blue",category:"Ocean",image:"https://images.unsplash.com/photo-1484291470158-b8f8d608850d?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Quiet Valley",category:"Nature",image:"https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Pink Clouds",category:"Sky",image:"https://images.unsplash.com/photo-1501691223387-dd0500403074?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Rocky Coast",category:"Ocean",image:"https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Golden Fields",category:"Nature",image:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Forest Path",category:"Forest",image:"https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Mountain Lake",category:"Nature",image:"https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Sunset Beach",category:"Beach",image:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Green Escape",category:"Nature",image:"https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Starry Night",category:"Space",image:"https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Lakeside View",category:"Lake",image:"https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=85"},
-  {title:"Minimal Horizon",category:"Minimal",image:"https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?auto=format&fit=crop&w=1000&q=85"}
-];
+const WALLPAPERS = []; // Live published wallpapers are loaded from Firestore; no demo flash. 
 
 // Firebase Web App config: replace each value with your own Firebase Console config.
 const firebaseConfig = {
@@ -529,17 +468,11 @@ const moreBtn = document.getElementById("moreBtn");
 const moreArea = document.getElementById("moreArea");
 const resultCount = document.getElementById("resultCount");
 const empty = document.getElementById("empty");
-const viewer = document.getElementById("viewer");
-const viewerImage = document.getElementById("viewerImage");
-const viewerTitle = document.getElementById("viewerTitle");
-const viewerCount = document.getElementById("viewerCount");
-const viewerDownload = document.getElementById("viewerDownload");
+
 
 let visibleCount = INITIAL_COUNT;
 let filtered = WALLPAPERS.slice(0, INITIAL_COUNT);
-let currentIndex = 0;
-let lastFocused = null;
-let touchStartX = 0;
+
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({
@@ -568,12 +501,6 @@ function fileType(wallpaper) {
   if (explicit) return String(explicit).replace(/^image\//i, "").toUpperCase();
   try { const path = new URL(wallpaper.image).pathname; const ext = path.split(".").pop(); return ext && ext.length < 6 ? ext.toUpperCase() : "Image"; } catch { return "Image"; }
 }
-function detailsHTML(w) {
-  const resolution = w.resolution || (w._width && w._height ? `${w._width}x${w._height}` : "Loading image…");
-  const size = w.fileSize || w.file_size || w.size || "Unknown (URL only)";
-  const tags = Array.isArray(w.tags) ? w.tags.join(", ") : (w.tags || "—");
-  return `<h3>Image details</h3><div class="detail-row"><span>Tags</span><span>${escapeHTML(tags || "—")}</span></div><div class="detail-row"><span>Resolution</span><span>${escapeHTML(resolution)}</span></div><div class="detail-row"><span>File Size</span><span>${escapeHTML(typeof size === "number" ? formatBytes(size) : String(size))}</span></div><div class="detail-row"><span>File Type</span><span>${escapeHTML(fileType(w))}</span></div>`;
-}
 async function shareWallpaper(wallpaper) {
   const shareData = {title: wallpaper.title || "WALLX Wallpaper", text: wallpaper.title || "Wallpaper", url: wallpaper.image};
   try {
@@ -586,103 +513,27 @@ async function shareWallpaper(wallpaper) {
 function render() {
   filtered = getVisibleWallpapers();
   grid.innerHTML = "";
-
-  filtered.forEach((wallpaper, index) => {
+  filtered.forEach((wallpaper) => {
     const card = document.createElement("article");
     card.className = "wall-card";
     card.innerHTML = `
-      <button class="card-open" type="button" aria-label="Open ${escapeHTML(wallpaper.title)}">
-        <span class="thumb"><img loading="lazy" decoding="async" src="${escapeHTML(wallpaper.image)}" alt="${escapeHTML(wallpaper.title)}"></span>
-        <div class="card-info"><div class="card-title">${escapeHTML(wallpaper.title)}</div></div>
-      </button>`;
-    card.querySelector(".card-open").addEventListener("click", () => openViewer(index));
-    card.querySelector("img").addEventListener("load", event => {
-      wallpaper._width = event.target.naturalWidth; wallpaper._height = event.target.naturalHeight;
-    });
+      <div class="thumb"><img loading="lazy" decoding="async" src="${escapeHTML(wallpaper.image)}" alt="${escapeHTML(wallpaper.title)}"></div>
+      <div class="card-info"><div class="card-title">${escapeHTML(wallpaper.title)}</div></div>
+      <div class="card-actions">
+        <button class="card-download" type="button">↓ Download</button>
+        <button class="card-share" type="button">Share</button>
+      </div>`;
+    const img = card.querySelector("img");
+    img.addEventListener("load", event => { wallpaper._width=event.target.naturalWidth; wallpaper._height=event.target.naturalHeight; });
+    card.querySelector(".card-download").addEventListener("click", () => downloadWallpaper(wallpaper));
+    card.querySelector(".card-share").addEventListener("click", () => shareWallpaper(wallpaper));
     grid.appendChild(card);
   });
-
-  resultCount.textContent = search.value.trim()
-    ? `${filtered.length} results`
-    : `${filtered.length} wallpapers`;
-
+  resultCount.textContent = search.value.trim() ? `${filtered.length} results` : `${filtered.length} wallpapers`;
   empty.style.display = filtered.length ? "none" : "block";
   moreArea.style.display = search.value.trim() ? "none" : "block";
   moreBtn.disabled = visibleCount >= WALLPAPERS.length;
-  moreBtn.textContent = visibleCount >= WALLPAPERS.length
-    ? "All Wallpapers Loaded ✓"
-    : "See More Wallpapers ↓";
-}
-
-function openViewer(index) {
-  currentIndex = index;
-  lastFocused = document.activeElement;
-  updateViewer();
-  viewer.classList.add("open");
-  document.body.style.overflow = "hidden";
-  document.getElementById("closeViewer").focus();
-}
-
-function closeViewer() {
-  viewer.classList.remove("open");
-  document.body.style.overflow = "";
-  viewerImage.src = "";
-  if (lastFocused) lastFocused.focus();
-}
-
-function updateViewer() {
-  const wallpaper = filtered[currentIndex];
-  if (!wallpaper) return;
-
-  viewerImage.onload = () => {
-    wallpaper._width = viewerImage.naturalWidth;
-    wallpaper._height = viewerImage.naturalHeight;
-  };
-  viewerImage.src = wallpaper.image;
-  viewerImage.alt = wallpaper.title;
-  viewerTitle.textContent = wallpaper.title;
-  viewerCount.textContent = `${currentIndex + 1} / ${filtered.length}`;
-  viewerDownload.disabled = false;
-}
-
-function moveSlide(direction) {
-  if (!filtered.length) return;
-  currentIndex = (currentIndex + direction + filtered.length) % filtered.length;
-  updateViewer();
-}
-
-async function downloadWallpaper(wallpaper) {
-  const button = document.activeElement;
-  const originalText = button && button.textContent;
-  if (button && button.tagName === "BUTTON") {
-    button.disabled = true;
-    button.textContent = "Preparing...";
-  }
-
-  try {
-    const response = await fetch(wallpaper.image);
-    if (!response.ok) throw new Error("Image download failed");
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = wallpaper.title.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".jpg";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-  } catch (error) {
-    // Cross-origin restrictions may prevent downloading remote demo images.
-    // Open the image so the user can save it from the browser.
-    window.open(wallpaper.image, "_blank", "noopener");
-    alert("Direct download was blocked by the image host. The image has been opened in a new tab; use your browser's Save Image option.");
-  } finally {
-    if (button && button.tagName === "BUTTON") {
-      button.disabled = false;
-      button.textContent = originalText || "Download";
-    }
-  }
+  moreBtn.textContent = visibleCount >= WALLPAPERS.length ? "All Wallpapers Loaded ✓" : "See More Wallpapers ↓";
 }
 
 search.addEventListener("input", () => {
@@ -702,60 +553,34 @@ moreBtn.addEventListener("click", () => {
   render();
 });
 
-document.getElementById("closeViewer").addEventListener("click", closeViewer);
-document.getElementById("prev").addEventListener("click", () => moveSlide(-1));
-document.getElementById("next").addEventListener("click", () => moveSlide(1));
-
-viewer.addEventListener("click", event => {
-  if (event.target === viewer) closeViewer();
-});
-
-viewerDownload.addEventListener("click", () => {
-  if (filtered[currentIndex]) downloadWallpaper(filtered[currentIndex]);
-});
-document.getElementById("viewerShare").addEventListener("click", () => {
-  if (filtered[currentIndex]) shareWallpaper(filtered[currentIndex]);
-});
-
-document.addEventListener("keydown", event => {
-  if (!viewer.classList.contains("open")) return;
-
-  if (event.key === "Escape") closeViewer();
-  if (event.key === "ArrowLeft") moveSlide(-1);
-  if (event.key === "ArrowRight") moveSlide(1);
-});
-
-const swipeArea = document.getElementById("swipeArea");
-swipeArea.addEventListener("touchstart", event => {
-  touchStartX = event.changedTouches[0].screenX;
-}, {passive:true});
-
-swipeArea.addEventListener("touchend", event => {
-  const delta = event.changedTouches[0].screenX - touchStartX;
-  if (Math.abs(delta) > 45) moveSlide(delta < 0 ? 1 : -1);
-}, {passive:true});
-
 async function loadPublishedWallpapers() {
-  if (!db) return; // Demo wallpapers remain visible until Firebase config is added.
+  grid.innerHTML = "";
+  empty.style.display = "block";
+  empty.textContent = "Loading wallpapers…";
+  moreArea.style.display = "none";
+  if (!db) {
+    empty.textContent = "Firebase configuration is missing. Add your Firebase Web App config to index.html.";
+    resultCount.textContent = "0 wallpapers";
+    return;
+  }
   try {
     const snapshot = await db.collection("wallpapers").where("published", "==", true).get();
-    if (snapshot.empty) return; // Keep demo content until you add published items.
     const fromFirebase = snapshot.docs.map(doc => {
       const d = doc.data();
       return { id: doc.id, title: d.title || "Wallpaper", category: d.category || "Other", image: d.image || "", tags: d.tags || d.description || "", resolution: d.resolution || "", fileSize: d.fileSize || d.file_size || "", fileType: d.fileType || d.filetype || "" };
     }).filter(w => /^https?:\/\//i.test(w.image));
-    if (fromFirebase.length) {
-      WALLPAPERS.splice(0, WALLPAPERS.length, ...fromFirebase);
-      visibleCount = WALLPAPERS.length;
-      render();
-    }
+    WALLPAPERS.splice(0, WALLPAPERS.length, ...fromFirebase);
+    visibleCount = WALLPAPERS.length;
+    render();
+    if (!WALLPAPERS.length) empty.textContent = "No published wallpapers yet.";
   } catch (error) {
     console.error("Could not load published wallpapers:", error);
+    resultCount.textContent = "— wallpapers";
+    empty.textContent = "Wallpapers could not be loaded. Check Firebase configuration and Firestore Rules.";
   }
 }
 
-/* Initial demo content appears immediately; Firebase content replaces it when available. */
-render();
+// Wait for Firestore before rendering anything: demo wallpapers never flash on screen.
 loadPublishedWallpapers();
 </script>
 </body>
