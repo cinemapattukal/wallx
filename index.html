@@ -330,8 +330,10 @@ footer {
 }
 #prev { left: 8px; }
 #next { right: 8px; }
-.viewer-actions { display:flex; justify-content:center; gap:12px; padding:10px 0 4px; }
-.viewer-details { width:100%; max-width:520px; align-self:center; border:1px solid var(--border); border-radius:12px; }
+.viewer-actions { display:flex; justify-content:center; gap:12px; padding:10px 0 4px; flex-wrap:wrap; }
+.viewer-actions button { min-width:120px; padding:12px 22px; border:1px solid #6e5bb0; border-radius:12px; background:#29213f; color:#fff; font:inherit; font-size:14px; font-weight:700; }
+.viewer-actions button:hover { background:#3b2d5d; }
+.viewer-actions button:disabled { opacity:.65; }
 .viewer-hint { margin-top:8px; }
 .viewer-hint {
   color: var(--muted);
@@ -432,14 +434,9 @@ footer {
               aria-label="Next wallpaper">›</button>
     </div>
     <div class="viewer-actions">
-      <button id="viewerDownload" class="icon-action" type="button" aria-label="Download wallpaper" title="Download">
-        <svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></svg>
-      </button>
-      <button id="viewerShare" class="icon-action" type="button" aria-label="Share wallpaper" title="Share">
-        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2"/></svg>
-      </button>
+      <button id="viewerDownload" type="button">Download</button>
+      <button id="viewerShare" type="button">Share</button>
     </div>
-    <div id="viewerDetails" class="wall-details viewer-details"></div>
     <div class="viewer-hint">Swipe left/right or use your keyboard arrows</div>
   </div>
 </div>
@@ -640,13 +637,11 @@ function updateViewer() {
   viewerImage.onload = () => {
     wallpaper._width = viewerImage.naturalWidth;
     wallpaper._height = viewerImage.naturalHeight;
-    document.getElementById("viewerDetails").innerHTML = detailsHTML(wallpaper);
   };
   viewerImage.src = wallpaper.image;
   viewerImage.alt = wallpaper.title;
   viewerTitle.textContent = wallpaper.title;
   viewerCount.textContent = `${currentIndex + 1} / ${filtered.length}`;
-  document.getElementById("viewerDetails").innerHTML = detailsHTML(wallpaper);
   viewerDownload.disabled = false;
 }
 
@@ -685,7 +680,7 @@ async function downloadWallpaper(wallpaper) {
   } finally {
     if (button && button.tagName === "BUTTON") {
       button.disabled = false;
-      button.textContent = originalText || "↓ Download";
+      button.textContent = originalText || "Download";
     }
   }
 }
