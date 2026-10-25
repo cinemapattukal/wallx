@@ -163,27 +163,7 @@ h1 {
   transform: translateY(-4px);
   border-color: #7770c8;
 }
-
-.card-open {display:block;width:100%;padding:0;margin:0;border:0;border-radius:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
-.card-open:focus-visible,.icon-action:focus-visible {outline:2px solid var(--accent);outline-offset:3px}
-.card-info {padding:12px}
-.card-title {margin:0}
-.card-actions,.viewer-actions {display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:0 12px 12px}
-.icon-action {display:inline-flex;align-items:center;justify-content:center;width:44px;height:42px;flex:0 0 auto;border:1px solid #6555a2;border-radius:10px;background:#292341;color:#fff;padding:0;cursor:pointer}
-.icon-action svg {width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.icon-action:hover {background:#44376f}
-.wall-card .wall-details {display:none!important}
-.viewer-actions {justify-content:center;padding:8px 0 2px}
-.viewer-actions .icon-action {width:auto;min-width:128px;padding:0 16px}
-.viewer-actions .icon-action::after {font-size:14px;font-weight:650}
-#viewerDownload::after {content:"Download"}
-#viewerShare::after {content:"Share"}
-.viewer-details {padding:16px}
-.viewer-details h3 {margin:0 0 12px;font-size:18px}
-.detail-row {display:flex;justify-content:space-between;gap:16px;padding:7px 0;font-size:14px}
-.detail-row span:first-child {color:var(--muted)}
-.detail-row span:last-child {text-align:right;overflow-wrap:anywhere}
-
+.card-open { display:block; width:100%; padding:0; border:0; margin:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
 .thumb {
   display: block;
   width: 100%;
@@ -284,11 +264,13 @@ footer {
 .viewer.open { display: flex; }
 .viewer-inner {
   width: min(100%,900px);
-  max-height: 100%;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 13px;
+  gap: 12px;
+  margin: auto;
 }
 .viewer-top {
   width: 100%;
@@ -322,12 +304,12 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  flex: 0 0 auto;
 }
 #viewerImage {
   display: block;
   max-width: 100%;
-  max-height: min(66vh,760px);
+  max-height: min(54vh,620px);
   width: auto;
   height: auto;
   object-fit: contain;
@@ -376,8 +358,14 @@ footer {
   .hero { padding: 35px 5% 20px; }
   h1 { letter-spacing: -1px; }
   .section { padding-top: 20px; }
-  .view-label { opacity: 1; }
-  #viewerImage { max-height: 62vh; }
+  .view-label { display:none; }
+  .viewer { padding: 10px; align-items: flex-start; }
+  .viewer-inner { width:100%; max-height: calc(100dvh - 20px); gap:10px; }
+  .viewer-top { flex:0 0 auto; }
+  .viewer-image-wrap { width:100%; flex:0 0 auto; }
+  #viewerImage { max-width:100%; max-height:46dvh; }
+  .viewer-actions { flex:0 0 auto; }
+  .viewer-details { flex:0 0 auto; }
   .slide-arrow { width: 36px; height: 42px; }
 }
 </style>
@@ -609,15 +597,8 @@ function render() {
       <button class="card-open" type="button" aria-label="Open ${escapeHTML(wallpaper.title)}">
         <span class="thumb"><img loading="lazy" decoding="async" src="${escapeHTML(wallpaper.image)}" alt="${escapeHTML(wallpaper.title)}"></span>
         <div class="card-info"><div class="card-title">${escapeHTML(wallpaper.title)}</div></div>
-      </button>
-      <div class="card-actions">
-        <button class="icon-action card-download" type="button" aria-label="Download ${escapeHTML(wallpaper.title)}" title="Download"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></svg></button>
-        <button class="icon-action card-share" type="button" aria-label="Share ${escapeHTML(wallpaper.title)}" title="Share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2"/></svg></button>
-      </div>
-      `;
+      </button>`;
     card.querySelector(".card-open").addEventListener("click", () => openViewer(index));
-    card.querySelector(".card-download").addEventListener("click", () => downloadWallpaper(wallpaper));
-    card.querySelector(".card-share").addEventListener("click", () => shareWallpaper(wallpaper));
     card.querySelector("img").addEventListener("load", event => {
       wallpaper._width = event.target.naturalWidth; wallpaper._height = event.target.naturalHeight;
     });
@@ -656,6 +637,11 @@ function updateViewer() {
   const wallpaper = filtered[currentIndex];
   if (!wallpaper) return;
 
+  viewerImage.onload = () => {
+    wallpaper._width = viewerImage.naturalWidth;
+    wallpaper._height = viewerImage.naturalHeight;
+    document.getElementById("viewerDetails").innerHTML = detailsHTML(wallpaper);
+  };
   viewerImage.src = wallpaper.image;
   viewerImage.alt = wallpaper.title;
   viewerTitle.textContent = wallpaper.title;
