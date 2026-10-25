@@ -510,24 +510,15 @@ function fileType(wallpaper) {
   if (explicit) return String(explicit).replace(/^image\//i, "").toUpperCase();
   try { const path = new URL(wallpaper.image).pathname; const ext = path.split(".").pop(); return ext && ext.length < 6 ? ext.toUpperCase() : "Image"; } catch { return "Image"; }
 }
-async function downloadWallpaper(wallpaper) {
+function downloadWallpaper(wallpaper) {
   const url = wallpaper && wallpaper.image;
   if (!url) { alert("Wallpaper image URL not found."); return; }
-  const filename = ((wallpaper.title || "WALLX-Wallpaper").trim().replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "") || "WALLX-Wallpaper") + "." + (fileType(wallpaper).toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg");
-  try {
-    const response = await fetch(url, {mode: "cors", cache: "no-cache"});
-    if (!response.ok) throw new Error("Image could not be fetched");
-    const blob = await response.blob();
-    if (!blob.type.startsWith("image/") && blob.size === 0) throw new Error("Empty image");
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = objectUrl; a.download = filename; a.style.display = "none";
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
-  } catch (error) {
-    // Cross-origin hosts may block downloads. Opening the direct image is the safe fallback.
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
-    if (!opened) location.href = url;
-    alert("ഈ image host നേരിട്ടുള്ള download തടയുന്നു. തുറന്ന image-ൽ long-press ചെയ്ത് Download image തിരഞ്ഞെടുക്കുക.");
+  // Open the original image URL in a new tab. On mobile, users can then
+  // use the browser menu or long-press the image to save it.
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    // Popup blockers may prevent a new tab; navigate directly as fallback.
+    location.href = url;
   }
 }
 
