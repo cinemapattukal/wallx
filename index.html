@@ -163,6 +163,27 @@ h1 {
   transform: translateY(-4px);
   border-color: #7770c8;
 }
+
+.card-open {display:block;width:100%;padding:0;margin:0;border:0;border-radius:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.card-open:focus-visible,.icon-action:focus-visible {outline:2px solid var(--accent);outline-offset:3px}
+.card-info {padding:12px}
+.card-title {margin:0}
+.card-actions,.viewer-actions {display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:0 12px 12px}
+.icon-action {display:inline-flex;align-items:center;justify-content:center;width:44px;height:42px;flex:0 0 auto;border:1px solid #6555a2;border-radius:10px;background:#292341;color:#fff;padding:0;cursor:pointer}
+.icon-action svg {width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.icon-action:hover {background:#44376f}
+.wall-card .wall-details {display:none!important}
+.viewer-actions {justify-content:center;padding:8px 0 2px}
+.viewer-actions .icon-action {width:auto;min-width:128px;padding:0 16px}
+.viewer-actions .icon-action::after {font-size:14px;font-weight:650}
+#viewerDownload::after {content:"Download"}
+#viewerShare::after {content:"Share"}
+.viewer-details {padding:16px}
+.viewer-details h3 {margin:0 0 12px;font-size:18px}
+.detail-row {display:flex;justify-content:space-between;gap:16px;padding:7px 0;font-size:14px}
+.detail-row span:first-child {color:var(--muted)}
+.detail-row span:last-child {text-align:right;overflow-wrap:anywhere}
+
 .thumb {
   display: block;
   width: 100%;
@@ -593,13 +614,12 @@ function render() {
         <button class="icon-action card-download" type="button" aria-label="Download ${escapeHTML(wallpaper.title)}" title="Download"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></svg></button>
         <button class="icon-action card-share" type="button" aria-label="Share ${escapeHTML(wallpaper.title)}" title="Share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2"/></svg></button>
       </div>
-      <div class="wall-details">${detailsHTML(wallpaper)}</div>`;
+      `;
     card.querySelector(".card-open").addEventListener("click", () => openViewer(index));
     card.querySelector(".card-download").addEventListener("click", () => downloadWallpaper(wallpaper));
     card.querySelector(".card-share").addEventListener("click", () => shareWallpaper(wallpaper));
     card.querySelector("img").addEventListener("load", event => {
       wallpaper._width = event.target.naturalWidth; wallpaper._height = event.target.naturalHeight;
-      const details = card.querySelector(".wall-details"); if(details) details.innerHTML = detailsHTML(wallpaper);
     });
     grid.appendChild(card);
   });
