@@ -13,7 +13,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 // Replace these placeholder values with the exact config from Firebase Console > Project settings > Your apps.
-const firebaseConfig={apiKey:"PASTE_YOUR_API_KEY",authDomain:"PASTE_YOUR_PROJECT_ID.firebaseapp.com",projectId:"PASTE_YOUR_PROJECT_ID",storageBucket:"PASTE_YOUR_STORAGE_BUCKET",messagingSenderId:"PASTE_YOUR_MESSAGING_SENDER_ID",appId:"PASTE_YOUR_APP_ID"};
+const firebaseConfig = {
+  apiKey: "AIzaSyB4gSdyhxjAfmrRU6fgCH6NyBl3yseT_Uw",
+  authDomain: "wallx-69844.firebaseapp.com",
+  projectId: "wallx-69844",
+  storageBucket: "wallx-69844.firebasestorage.app",
+  messagingSenderId: "938543747642",
+  appId: "1:938543747642:web:97c43fa954dd817a2c1b03"
+};
 const $=id=>document.getElementById(id);const show=(el,msg,kind='ok')=>{el.textContent=msg;el.className='status '+kind};const clearStatus=el=>{el.textContent='';el.className='status'};
 let auth=null,db=null,allowedAdmin=false;
 try{if(firebaseConfig.apiKey!=='PASTE_YOUR_API_KEY'){firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();}else{show($('loginStatus'),'First add your Firebase Web App config values in admin.html and index.html.','err');}}catch(e){show($('loginStatus'),'Firebase setup error: '+e.message,'err')}
