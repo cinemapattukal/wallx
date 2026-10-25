@@ -501,13 +501,25 @@ function fileType(wallpaper) {
   if (explicit) return String(explicit).replace(/^image\//i, "").toUpperCase();
   try { const path = new URL(wallpaper.image).pathname; const ext = path.split(".").pop(); return ext && ext.length < 6 ? ext.toUpperCase() : "Image"; } catch { return "Image"; }
 }
-async function shareWallpaper(wallpaper) {
-  const shareData = {title: wallpaper.title || "WALLX Wallpaper", text: wallpaper.title || "Wallpaper", url: wallpaper.image};
+async function downloadWallpaper(wallpaper) {
+  const url = wallpaper && wallpaper.image;
+  if (!url) { alert("Wallpaper image URL not found."); return; }
+  const filename = ((wallpaper.title || "WALLX-Wallpaper").trim().replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "") || "WALLX-Wallpaper") + "." + (fileType(wallpaper).toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg");
   try {
-    if (navigator.share) await navigator.share(shareData);
-    else if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(wallpaper.image); alert("Image link copied."); }
-    else { window.prompt("Copy wallpaper link:", wallpaper.image); }
-  } catch (e) { if (e.name !== "AbortError") { try { window.prompt("Copy wallpaper link:", wallpaper.image); } catch {} } }
+    const response = await fetch(url, {mode: "cors", cache: "no-cache"});
+    if (!response.ok) throw new Error("Image could not be fetched");
+    const blob = await response.blob();
+    if (!blob.type.startsWith("image/") && blob.size === 0) throw new Error("Empty image");
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = objectUrl; a.download = filename; a.style.display = "none";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+  } catch (error) {
+    // Cross-origin hosts may block downloads. Opening the direct image is the safe fallback.
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) location.href = url;
+    alert("ഈ image host നേരിട്ടുള്ള download തടയുന്നു. തുറന്ന image-ൽ long-press ചെയ്ത് Download image തിരഞ്ഞെടുക്കുക.");
+  }
 }
 
 function render() {
@@ -520,13 +532,11 @@ function render() {
       <div class="thumb"><img loading="lazy" decoding="async" src="${escapeHTML(wallpaper.image)}" alt="${escapeHTML(wallpaper.title)}"></div>
       <div class="card-info"><div class="card-title">${escapeHTML(wallpaper.title)}</div></div>
       <div class="card-actions">
-        <button class="card-download" type="button">↓ Download</button>
-        <button class="card-share" type="button">Share</button>
+        <button class="card-download" type="button">Download</button>
       </div>`;
     const img = card.querySelector("img");
     img.addEventListener("load", event => { wallpaper._width=event.target.naturalWidth; wallpaper._height=event.target.naturalHeight; });
     card.querySelector(".card-download").addEventListener("click", () => downloadWallpaper(wallpaper));
-    card.querySelector(".card-share").addEventListener("click", () => shareWallpaper(wallpaper));
     grid.appendChild(card);
   });
   resultCount.textContent = search.value.trim() ? `${filtered.length} results` : `${filtered.length} wallpapers`;
