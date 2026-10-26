@@ -512,14 +512,16 @@ function fileType(wallpaper) {
 }
 function downloadWallpaper(wallpaper) {
   const url = wallpaper && wallpaper.image;
-  if (!url) { alert("Wallpaper image URL not found."); return; }
-  // Open the original image URL in a new tab. On mobile, users can then
-  // use the browser menu or long-press the image to save it.
-  const opened = window.open(url, "_blank", "noopener,noreferrer");
-  if (!opened) {
-    // Popup blockers may prevent a new tab; navigate directly as fallback.
-    location.href = url;
+  if (!url) {
+    alert("Wallpaper image URL not found.");
+    return;
   }
+  // Open the original image URL in a new tab.
+  const link = document.createElement("a");
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.click();
 }
 
 function render() {
