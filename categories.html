@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b10"><title>WALLX — Categories</title><style>:root{--bg:#090b10;--panel:#11151e;--text:#f7f8fc;--muted:#939bad;--accent:#8b7cff;--border:rgba(255,255,255,.09)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}header{position:sticky;top:0;background:#090b10e8;backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:18px 5%;display:flex;justify-content:space-between;align-items:center}a{color:#b6acff;text-decoration:none}.logo{font-size:24px;font-weight:900;letter-spacing:2px;color:white}.wrap{max-width:1200px;margin:auto;padding:35px 5%}.muted{color:var(--muted)}h1{font-size:clamp(28px,5vw,46px);margin:0 0 8px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:28px}.card{display:block;overflow:hidden;border:1px solid var(--border);border-radius:16px;background:var(--panel);color:var(--text)}.card img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;background:#151923}.card div{padding:14px;font-weight:750;text-align:center;overflow-wrap:anywhere}.empty{padding:30px 0;color:var(--muted)}@media(max-width:650px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card div{padding:11px;font-size:13px;text-align:center;overflow-wrap:anywhere}}</style></head><body><header><a class="logo" href="index.html">WALL<span style="color:var(--accent)">X</span></a><a href="index.html">← Home</a></header><main class="wrap"><h1>Explore Categories</h1><p class="muted">Choose a category to explore its wallpapers.</p><div id="grid" class="grid"></div><p id="empty" class="empty" style="display:none"></p></main>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b10"><title>WALLX — Categories</title><style>:root{--bg:#090b10;--panel:#11151e;--text:#f7f8fc;--muted:#939bad;--accent:#8b7cff;--border:rgba(255,255,255,.09)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}header{position:sticky;top:0;background:#090b10e8;backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:18px 5%;display:flex;justify-content:space-between;align-items:center}a{color:#b6acff;text-decoration:none}.logo{font-size:24px;font-weight:900;letter-spacing:2px;color:white}.wrap{max-width:1200px;margin:auto;padding:35px 5%}.muted{color:var(--muted)}h1{font-size:clamp(28px,5vw,46px);margin:0 0 8px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:28px}.card{display:block;overflow:hidden;border:1px solid var(--border);border-radius:16px;background:var(--panel);color:var(--text)}.card img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;background:#151923}.card div{padding:14px;font-weight:750;text-align:center;overflow-wrap:anywhere}.empty{padding:30px 0;color:var(--muted)}@media(max-width:650px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card div{padding:11px;font-size:13px;text-align:center;overflow-wrap:anywhere}}</style></head><body><header><a class="logo" href="index.html">WALL<span style="color:var(--accent)">X</span></a><a href="index.html">← Home</a></header><main class="wrap"><h1>Explore Categories</h1><p class="muted">Choose a category to explore its wallpapers.</p><div id="grid" class="grid"></div><p id="empty" class="empty">Loading categories…</p></main>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script>
 const firebaseConfig = {
   apiKey: "AIzaSyB4gSdyhxjAfmrRU6fgCH6NyBl3yseT_Uw",
@@ -8,5 +8,65 @@ const firebaseConfig = {
   messagingSenderId: "938543747642",
   appId: "1:938543747642:web:97c43fa954dd817a2c1b03"
 };
-if(firebaseConfig.apiKey==='PASTE_YOUR_API_KEY'){empty.textContent='Add your Firebase config in categories.html to load categories.'}else{firebase.initializeApp(firebaseConfig);firebase.firestore().collection('categories').where('published','==',true).get().then(s=>{grid.innerHTML='';s.forEach(d=>{const c=d.data(),a=document.createElement('a');a.className='card';a.href='category.html?id='+encodeURIComponent(d.id);const im=document.createElement('img');im.src=c.coverImage||'';im.alt=c.name||'Category';const title=document.createElement('div');title.textContent=c.name||'Category';a.append(im,title);grid.appendChild(a)});empty.style.display=s.empty?'block':'none';if(s.empty)empty.textContent='No published categories yet.'}).catch(e=>{empty.textContent='Could not load categories: '+e.message;empty.style.display='block'})}
+const CACHE_KEY = "wallx_published_categories_v1";
+
+function renderCategories(items) {
+  grid.innerHTML = "";
+  items.forEach(c => {
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = "category.html?id=" + encodeURIComponent(c.id);
+
+    const im = document.createElement("img");
+    im.src = c.coverImage || "";
+    im.alt = c.name || "Category";
+    im.loading = "eager";
+    im.decoding = "async";
+
+    const title = document.createElement("div");
+    title.textContent = c.name || "Category";
+
+    a.append(im, title);
+    grid.appendChild(a);
+  });
+  empty.style.display = items.length ? "none" : "block";
+  if (!items.length) empty.textContent = "No published categories yet.";
+}
+
+// Show the previously loaded categories immediately while Firebase refreshes in the background.
+try {
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    const items = JSON.parse(cached);
+    if (Array.isArray(items) && items.length) renderCategories(items);
+  }
+} catch (e) {}
+
+if (firebaseConfig.apiKey === "PASTE_YOUR_API_KEY") {
+  if (!grid.children.length) {
+    empty.textContent = "Add your Firebase config in categories.html to load categories.";
+    empty.style.display = "block";
+  }
+} else {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebase.firestore().collection("categories").where("published", "==", true).get()
+      .then(snapshot => {
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderCategories(items);
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(items)); } catch (e) {}
+      })
+      .catch(error => {
+        if (!grid.children.length) {
+          empty.textContent = "Could not load categories: " + error.message;
+          empty.style.display = "block";
+        }
+      });
+  } catch (error) {
+    if (!grid.children.length) {
+      empty.textContent = "Could not initialize Firebase: " + error.message;
+      empty.style.display = "block";
+    }
+  }
+}
 </script></body></html>
