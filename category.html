@@ -11,5 +11,122 @@
 };
 
   
-  const id=new URLSearchParams(location.search).get('id'),title=document.getElementById('title'),status=document.getElementById('status'),grid=document.getElementById('grid');if(!id){title.textContent='Category not found';}else if(firebaseConfig.apiKey==='PASTE_YOUR_API_KEY'){title.textContent='Firebase setup needed';status.textContent='Add your Firebase config in category.html.'}else{firebase.initializeApp(firebaseConfig);const db=firebase.firestore();db.collection('categories').doc(id).get().then(c=>{if(!c.exists||c.data().published!==true)throw new Error('Category not found or not published');title.textContent=c.data().name;return db.collection('wallpapers').where('categoryId','==',id).where('published','==',true).get()}).then(s=>{status.textContent=s.size+' wallpapers';s.forEach(d=>{const w=d.data(),card=document.createElement('article');card.className='card';const im=document.createElement('img');im.src=w.image||'';im.alt=w.title||'Wallpaper';im.loading='lazy';im.decoding='async';const info=document.createElement('div');info.className='card-info';const t=document.createElement('div');t.className='card-title';t.textContent=w.title||'Wallpaper';info.appendChild(t);const btn=document.createElement('button');btn.type='button';btn.className='download-btn';btn.textContent='Download';btn.addEventListener('click',()=>{if(!w.image){alert('Wallpaper image URL not found.');return;}const link=document.createElement('a');link.href=w.image;link.target='_blank';link.rel='noopener noreferrer';link.click();});card.append(im,info,btn);grid.appendChild(card)})}).catch(e=>{title.textContent='Category unavailable';status.textContent=e.message})}
+  const id = new URLSearchParams(location.search).get("id");
+  const title = document.getElementById("title");
+  const status = document.getElementById("status");
+  const grid = document.getElementById("grid");
+  const cacheKey = "wallx-category-cache-v1-" + (id || "none");
+
+  function renderWallpapers(categoryName, wallpapers) {
+    title.textContent = categoryName || "Category";
+    status.textContent = wallpapers.length + (wallpapers.length === 1 ? " wallpaper" : " wallpapers");
+    grid.innerHTML = "";
+
+    wallpapers.forEach(w => {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const im = document.createElement("img");
+      im.src = w.image || "";
+      im.alt = w.title || "Wallpaper";
+      im.loading = "lazy";
+      im.decoding = "async";
+
+      const info = document.createElement("div");
+      info.className = "card-info";
+      const t = document.createElement("div");
+      t.className = "card-title";
+      t.textContent = w.title || "Wallpaper";
+      info.appendChild(t);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "download-btn";
+      btn.textContent = "Download";
+      btn.addEventListener("click", () => {
+        if (!w.image) {
+          alert("Wallpaper image URL not found.");
+          return;
+        }
+        const link = document.createElement("a");
+        link.href = w.image;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.click();
+      });
+
+      card.append(im, info, btn);
+      grid.appendChild(card);
+    });
+  }
+
+  if (!id) {
+    title.textContent = "Category not found";
+  } else if (firebaseConfig.apiKey === "PASTE_YOUR_API_KEY") {
+    title.textContent = "Firebase setup needed";
+    status.textContent = "Add your Firebase config in category.html.";
+  } else {
+    // Show previously saved category content immediately on refresh.
+    let hasCache = false;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data && Array.isArray(data.wallpapers)) {
+          renderWallpapers(data.name, data.wallpapers);
+          hasCache = true;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      // Keep Firestore's own offline cache enabled when the browser allows it.
+      db.enablePersistence({synchronizeTabs:true}).catch(() => {});
+
+      db.collection("categories").doc(id).get()
+        .then(categoryDoc => {
+          if (!categoryDoc.exists || categoryDoc.data().published !== true) {
+            throw new Error("Category not found or not published.");
+          }
+          const categoryName = categoryDoc.data().name || "Category";
+          title.textContent = categoryName;
+
+          return db.collection("wallpapers")
+            .where("categoryId", "==", id)
+            .where("published", "==", true)
+            .get()
+            .then(snapshot => {
+              const wallpapers = snapshot.docs.map(doc => {
+                const w = doc.data();
+                return { title: w.title || "Wallpaper", image: w.image || "" };
+              });
+
+              // Save the latest result so next refresh can display it immediately.
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify({
+                  name: categoryName,
+                  wallpapers: wallpapers,
+                  savedAt: Date.now()
+                }));
+              } catch (e) {}
+
+              renderWallpapers(categoryName, wallpapers);
+            });
+        })
+        .catch(error => {
+          if (!hasCache) {
+            title.textContent = "Category unavailable";
+            status.textContent = error.message || "Could not load this category.";
+          }
+        });
+    } catch (error) {
+      if (!hasCache) {
+        title.textContent = "Category unavailable";
+        status.textContent = error.message || "Could not initialize Firebase.";
+      }
+    }
+  }
 </script></body></html>
